@@ -102,6 +102,32 @@ El nodo visual convierte imagen/video en un JSON de 4 claves
 El prompt esta probado contra varios multimodales y tiene decisiones
 medidas (ver `docs/PROMPTS.md`). El nodo nunca inventa: si falla, lo dice.
 
+## Techos de salida (lee esto si tu modelo no tiene mucho techo)
+
+Los valores por defecto son conservadores: caben en modelos con techo de
+salida de 4-8k tokens. Todos se ajustan desde `config.json`, sin tocar
+Python:
+
+- `modelo.max_tokens`: presupuesto por respuesta de charla (defecto 4000).
+- `modelo.max_tokens_tope`: techo al que sube automaticamente cuando un
+  turno agota el presupuesto (defecto 12000). Si tu proveedor da errores
+  por pedir mas de lo que admite tu modelo, bajalo. Si tu modelo va sobrado
+  (32k+), subelo.
+- `modelo.razonamiento.max_tokens`: presupuesto de razonamiento del modelo
+  de charla. Si tu proveedor no acepta el parametro `reasoning`, se
+  desactiva solo al primer 400 (anunciado en el log).
+- `vision.max_tokens` / `vision.max_razonamiento`: nodo visual.
+- `sondeo.max_tokens`: extraccion de la pre-memoria.
+- `sondeo.consolidacion.max_tokens`: la consolidacion de memoria.
+- `memoria.juez_max_tokens` / `memoria.juez_razonamiento`: los dos jueces
+  del pipeline de memoria (`juez_razonamiento: 0` desactiva el parametro
+  reasoning).
+- `sueno.max_tokens` y `escriba.max_tokens`: suenos y diario.
+
+El desarrollo original corria sobre un modelo que saca 32k de salida con
+razonamiento incluido: los valores antiguos iban a esa medida, y eso es un
+caso aislado.
+
 ## Servicio opcional
 
 - **Windows:** `wscript arrancar.vbs` (sin ventana) y tareas programadas:

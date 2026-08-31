@@ -63,6 +63,7 @@ class Vision:
         # Cuanto puede gastar PENSANDO, del total de arriba. El resto queda
         # reservado para lo que escribe.
         self._max_razonamiento = v.get("max_razonamiento", 1500)
+        self._razonamiento_ok = self._max_razonamiento > 0
         self._timeout = v.get("timeout", 300)
         self._log = log
 
@@ -102,10 +103,11 @@ class Vision:
             # presupuesto entero pensando y devolvia content vacio. Lo que hay
             # que topar es el RAZONAMIENTO, no la salida: asi lo que sobra
             # queda reservado para lo que de verdad dice.
-            "max_tokens": 4000,
-            "reasoning": {"max_tokens": self._max_razonamiento},
+            "max_tokens": self._max_tokens,
             "temperature": 0,
         }
+        if self._razonamiento_ok:
+            peticion["reasoning"] = {"max_tokens": self._max_razonamiento}
         req = urllib.request.Request(self._url, data=json.dumps(peticion).encode(), headers={
             "Content-Type": "application/json",
             "Authorization": "Bearer " + self._api_key,
@@ -114,8 +116,15 @@ class Vision:
             with urllib.request.urlopen(req, timeout=self._timeout) as r:
                 d = json.loads(r.read().decode("utf-8"))
         except urllib.error.HTTPError as err:
+            detalle = err.read().decode("utf-8", "replace")[:200]
+            if (err.code == 400 and self._razonamiento_ok
+                    and "reasoning" in detalle.lower()):
+                self._razonamiento_ok = False
+                self._log("vision: el proveedor rechazo 'reasoning'; "
+                          "se desactiva y se reintenta")
+                return self.recordar_mirando(datos, mime, tipo, pregunta)
             raise ErrorVision("HTTP %s al volver a mirar: %s"
-                              % (err.code, err.read().decode("utf-8", "replace")[:200])) from err
+                              % (err.code, detalle)) from err
         except (urllib.error.URLError, OSError, TimeoutError) as err:
             raise ErrorVision("no se pudo volver a mirar: %s" % err) from err
         op = (d.get("choices") or [{}])[0]
@@ -169,11 +178,13 @@ class Vision:
                 {"role": "user", "content": [medio, {"type": "text", "text": recordatorio}]},
             ],
             "max_tokens": self._max_tokens,
-            # Muse razona. Sin este tope puede gastarse el presupuesto entero
-            # pensando y devolver el JSON vacio.
-            "reasoning": {"max_tokens": self._max_razonamiento},
             "response_format": {"type": "json_object"},
         }
+        # Muse razona. Sin este tope puede gastarse el presupuesto entero
+        # pensando y devolver el JSON vacio. Si el proveedor no admite el
+        # parametro, se desactiva solo al primer 400.
+        if self._razonamiento_ok:
+            peticion["reasoning"] = {"max_tokens": self._max_razonamiento}
 
         req = urllib.request.Request(self._url, data=json.dumps(peticion).encode(), headers={
             "Content-Type": "application/json",
@@ -187,8 +198,15 @@ class Vision:
                     d = json.loads(r.read().decode("utf-8"))
                 break
             except urllib.error.HTTPError as err:
+                detalle = err.read().decode("utf-8", "replace")[:300]
+                if (err.code == 400 and self._razonamiento_ok
+                        and "reasoning" in detalle.lower()):
+                    self._razonamiento_ok = False
+                    self._log("vision: el proveedor rechazo 'reasoning'; "
+                              "se desactiva y se reintenta")
+                    return self.mira(datos, mime, tipo, enfoque)
                 raise ErrorVision("HTTP %s del extractor: %s"
-                                  % (err.code, err.read().decode("utf-8", "replace")[:300])) from err
+                                  % (err.code, detalle)) from err
             except (urllib.error.URLError, OSError, TimeoutError) as err:
                 if intento == REINTENTOS:
                     raise ErrorVision("no se pudo contactar con el extractor: %s" % err) from err

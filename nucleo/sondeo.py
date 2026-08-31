@@ -123,7 +123,10 @@ class Sondeo:
         # vez de extraer, y cuando extraia escribia con faltas. Estas
         # particulas acaban siendo lo que ella recuerda.
         self._modelo = s.get("modelo", base["id"])
-        self._max_tokens = s.get("max_tokens", 16000)
+        # Default publico conservador: los 16000 originales iban a la medida
+        # de un modelo con 32k de salida (caso aislado). Quien tenga techo
+        # de sobra lo sube en config: sondeo.max_tokens.
+        self._max_tokens = s.get("max_tokens", 8000)
         self._proveedor = proveedor_de(s.get("consolidacion") or {})
         self._mensajes_vistos = s.get("mensajes_por_sondeo", 24)
         # La marca de POR DONDE VA, en disco. Antes esto era un contador en

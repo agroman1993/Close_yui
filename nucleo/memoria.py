@@ -85,6 +85,14 @@ class Memoria:
         # cuantas veces resonara un recuerdo.
         self._modelo_juez = m.get("modelo_juez", base["id"])
         self._modelo_frio = m.get("modelo_frio") or base["id"]
+        # Presupuesto de los dos jueces. Los valores originales (8000/2500)
+        # estaban probados en produccion, pero a la medida de modelos con
+        # techo de salida grande. Los defaults publicos son conservadores y
+        # se suben por config: memoria.juez_max_tokens y
+        # memoria.juez_razonamiento (0 desactiva el parametro reasoning).
+        self._juez_max_tokens = m.get("juez_max_tokens", 6000)
+        self._juez_razonamiento = m.get("juez_razonamiento", 2000)
+        self._razonamiento_ok = self._juez_razonamiento > 0
         self._peso_emocion = m.get("peso_emocion", 1.0)
         self._peso_conectividad = m.get("peso_conectividad", 1.0)
         self._corte = m.get("corte", 6.0)
@@ -194,22 +202,37 @@ class Memoria:
         return vectores
 
     def _chat_json(self, sistema, usuario, modelo=None):
-        d = self._pedir(self._url_chat, {
+        cuerpo = {
             "model": modelo or self._modelo_juez,
             "messages": [{"role": "system", "content": sistema},
                          {"role": "user", "content": usuario}],
             # Los dos jueces razonan antes de puntuar. Subir el presupuesto
             # total no arregla que se lo coman pensando: lo que hay que topar
             # es el PENSAMIENTO, y asi el resto queda para la nota.
-            "max_tokens": 8000,
-            "reasoning": {"max_tokens": 2500},
+            "max_tokens": self._juez_max_tokens,
             # Puntuar es clasificar, no redactar. Con la temperatura del
             # proveedor (0.7-1.0) el mismo recuerdo sacaba notas distintas en
             # llamadas seguidas: eso no es criterio del juez, es ruido que
             # metemos nosotros y que luego se compara contra un corte fijo.
             "temperature": 0,
             "response_format": {"type": "json_object"},
-        })
+        }
+        if self._razonamiento_ok:
+            cuerpo["reasoning"] = {"max_tokens": self._juez_razonamiento}
+        try:
+            d = self._pedir(self._url_chat, cuerpo)
+        except ErrorMemoria as err:
+            detalle = str(err).lower()
+            # Autosaneado: si el proveedor no admite el parametro "reasoning",
+            # se desactiva y se reintenta una vez sin el (anunciado en el log).
+            if self._razonamiento_ok and "400" in detalle and "reasoning" in detalle:
+                self._razonamiento_ok = False
+                self._log("memoria: el proveedor rechazo 'reasoning'; "
+                          "se desactiva y se reintenta")
+                cuerpo.pop("reasoning", None)
+                d = self._pedir(self._url_chat, cuerpo)
+            else:
+                raise
         msg = (d.get("choices") or [{}])[0].get("message", {}) or {}
         texto = (msg.get("content") or "").strip()
         if not texto:

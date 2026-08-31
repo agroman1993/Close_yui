@@ -262,6 +262,7 @@ class Enrutador:
             max_tokens=m.get("max_tokens", 2000),
             temperatura=m.get("temperatura", 0.9),
             razonamiento=m.get("razonamiento"),
+            max_tokens_tope=m.get("max_tokens_tope"),
             log=log,
         )
         self._cfg = cfg

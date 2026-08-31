@@ -32,7 +32,8 @@ class ErrorModelo(Exception):
 
 class Modelo:
     def __init__(self, base_url, api_key, modelo_id, max_tokens=2000,
-                 temperatura=0.9, timeout=180, razonamiento=None, log=print):
+                 temperatura=0.9, timeout=180, razonamiento=None,
+                 max_tokens_tope=None, log=print):
         self._url = base_url.rstrip("/") + "/chat/completions"
         self._api_key = api_key
         self._id = modelo_id
@@ -45,6 +46,11 @@ class Modelo:
         # presupuesto queda reservado para la respuesta visible. Si el
         # proveedor rechaza el parametro, se desactiva solo al primer 400.
         self._razonamiento = razonamiento
+        # Techo de las subidas automaticas (subir_max_tokens). Por config:
+        # modelo.max_tokens_tope. El default publico es conservador: los
+        # 20000 originales iban a la medida de un modelo que saca 32k de
+        # salida con razonamiento incluido, y eso es un caso aislado.
+        self._max_tokens_tope = max_tokens_tope or self.MAX_TOKENS_TOPE
         # Ultimo consumo, para saber cuanto penso en un turno que SALIO
         # bien. Antes solo se sabia de los que fallaban.
         self.ultimo_uso = {}
@@ -152,15 +158,15 @@ class Modelo:
     # solo se paga lo que el modelo llega a generar.
     #
     # Nota de campo: estaba en 8000 y el max_tokens de config subio a 12000 ese mismo
-    # dia, con lo que subir_max_tokens() no podia subir NADA —devolvia None a
-    # la primera—. Se sube a 20000, por debajo de los 32.768 que admite el
-    # endpoint que se usaba originalmente.
-    MAX_TOKENS_TOPE = 20000
+    # dia, con lo que subir_max_tokens() no podia subir NADA -devolvia None a
+    # la primera—. Por eso el tope debe quedar SIEMPRE por encima del
+    # max_tokens de arranque; si no, la subida automatica nace muerta.
+    MAX_TOKENS_TOPE = 12000
 
     def subir_max_tokens(self, delta):
         """Sube el techo de salida. Devuelve el techo nuevo, o None si ya
         estaba en el tope. Para usar tras agotar el presupuesto razonando."""
-        nuevo = min(self._max_tokens + delta, self.MAX_TOKENS_TOPE)
+        nuevo = min(self._max_tokens + delta, self._max_tokens_tope)
         if nuevo == self._max_tokens:
             return None
         self._max_tokens = nuevo

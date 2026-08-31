@@ -90,7 +90,10 @@ def main():
     log("preguntando a %s ..." % (c.get("modelo") or cfg["modelo"]["id"]))
     d = sonda._pedir(sonda._consolidacion_tpl, peticion,
                      modelo=c.get("modelo") or cfg["modelo"]["id"],
-                     max_tokens=c.get("max_tokens", 40000),
+                     # Default publico conservador: 40000 iba a la medida de
+                     # un modelo con 32k de salida. Se sube en config:
+                     # sondeo.consolidacion.max_tokens.
+                     max_tokens=c.get("max_tokens", 8000),
                      proveedor=proveedor)
 
     refuerzos = [r for r in (d.get("refuerzos") or [])
