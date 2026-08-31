@@ -128,6 +128,27 @@ def cargar_config():
     if not token or token.startswith("PON_AQUI"):
         sys.exit("config.json no tiene token. Pidele uno a @BotFather en Telegram.")
 
+    # Las rutas de datos se anclan a la carpeta del proyecto: da igual desde
+    # donde se arranque (tarea programada, systemd, docker, doble click),
+    # los datos siempre caen junto al codigo y no en el directorio de trabajo.
+    for seccion, clave, defecto in (
+        ("diario", "ruta", "diario_notas.md"),
+        ("sueno", "ruta", "suenos.md"),
+        ("sueno", "marca", ".ultimo_sueno"),
+        ("hilos", "ruta", "hilos.json"),
+        ("memoria", "ruta", "memoria.jsonl"),
+        ("memoria", "marca", ".ultima_promocion"),
+        ("sondeo", "pre_memoria", "pre-memoria.jsonl"),
+        ("sondeo", "marca", ".ultimo_sondeo"),
+    ):
+        bloque = cfg.setdefault(seccion, {})
+        p = Path(bloque.get(clave) or defecto)
+        if not p.is_absolute():
+            bloque[clave] = str(RAIZ / p)
+    apuntes = Path(cfg.get("apuntes") or "MEMORY.md")
+    if not apuntes.is_absolute():
+        cfg["apuntes"] = str(RAIZ / apuntes)
+
     # La personalidad vive en ficheros propios: es texto largo, se edita a
     # menudo y no tiene por que estar escapado dentro de un JSON.
     cfg["sistema"] = cargar_prompt(cfg.get("sistema_ficheros")

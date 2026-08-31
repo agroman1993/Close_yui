@@ -58,7 +58,11 @@ if (Test-Path config.json) {
     $cfg.vision.base_url = $base
     $cfg.vision.api_key = $clave
     $cfg.vision.id = $vision
-    $cfg | ConvertTo-Json -Depth 10 | Set-Content config.json -Encoding UTF8
+    # UTF-8 SIN BOM: el json.loads de Python no tolera el BOM que escribe
+    # Windows PowerShell 5.1 con Set-Content -Encoding UTF8.
+    $json = $cfg | ConvertTo-Json -Depth 10
+    [System.IO.File]::WriteAllText((Join-Path $raiz "config.json"), $json,
+        (New-Object System.Text.UTF8Encoding $false))
     Write-Host "config.json creado." -ForegroundColor Green
     Write-Host "OJO: el modelo de embeddings (memoria.modelo_embedding) queda de plantilla;" -ForegroundColor Yellow
     Write-Host "si quieres memoria a largo plazo, edita config.json y pon uno real."

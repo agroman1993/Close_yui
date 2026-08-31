@@ -1,0 +1,31 @@
+# Que el build de Docker NO hornee lo intimo en la imagen:
+# config.json (tokens/keys) y los datos entran por volumes (docker-compose.yml).
+.git
+.venv
+__pycache__
+*.pyc
+config.json
+memoria.jsonl
+pre-memoria.jsonl
+hilos.json
+album.jsonl
+album/
+diario_notas.md
+suenos.md
+MEMORY.md
+salida.log
+consolidacion.log
+copias/
+archivo/
+ultima_vista/
+.ultima_consolidacion
+.ultimo_sondeo
+.ultimo_sueno
+.ultima_promocion
+instalar.ps1
+instalar.bat
+instalar.sh
+arrancar.cmd
+arrancar.vbs
+guardian.vbs
+consolidar.vbs
