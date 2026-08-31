@@ -1,0 +1,19 @@
+# docker compose up -d
+#
+# Antes: crea config.json (copia config.ejemplo.json y rellena token,
+# dueno_id y modelos) en esta misma carpeta.
+services:
+  close-yui:
+    build: .
+    restart: unless-stopped
+    volumes:
+      # Config y datos persistentes fuera de la imagen.
+      - ./config.json:/app/config.json
+      - datos:/app/datos
+    # Para que la memoria/hilos/diario sobrevivan al contenedor, pon sus
+    # rutas dentro de datos/ en config.json, por ejemplo:
+    #   "memoria": { "ruta": "datos/memoria.jsonl", ... }
+    #   "hilos":   { "ruta": "datos/hilos.json" }
+    #   "diario":  { "ruta": "datos/diario_notas.md", ... }
+volumes:
+  datos:

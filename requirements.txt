@@ -1,0 +1,3 @@
+# Close Yui funciona solo con la biblioteca estandar de Python, salvo
+# Pillow (lectura basica de imagenes para el album y el nodo visual).
+Pillow>=10.0

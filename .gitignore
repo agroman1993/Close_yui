@@ -1,0 +1,26 @@
+# Lo intimo: nunca al repo
+config.json
+MEMORY.md
+diario_notas.md
+suenos.md
+memoria.jsonl
+pre-memoria.jsonl
+hilos.json
+album.jsonl
+salida.log
+consolidacion.log
+copias/
+archivo/
+album/
+ultima_vista/
+.ultima_consolidacion
+.ultimo_sondeo
+.ultimo_sueno
+.ultima_promocion
+
+# Entorno
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.tmp

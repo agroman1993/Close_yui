@@ -1,0 +1,55 @@
+{
+  "token": "PON_AQ…FATHER",
+  "dueno_id": 0,
+  "persona": {
+    "nombre": "Yui",
+    "vocativo": "Papá"
+  },
+  "modelo": {
+    "base_url": "https://openrouter.ai/api/v1",
+    "api_key": "PON_AQ…ADER",
+    "id": "VENDOR/MODELO-DE-CHARLA",
+    "max_tokens": 8000,
+    "temperatura": 0.9
+  },
+  "turnos_memoria": 12,
+  "vision": {
+    "base_url": "https://openrouter.ai/api/v1",
+    "api_key": "PON_AQ…ADER",
+    "id": "VENDOR/MODELO-DE-VISION",
+    "max_tokens": 4000,
+    "timeout": 300
+  },
+  "diario": {
+    "ruta": "diario_notas.md",
+    "max_caracteres": 4000
+  },
+  "sueno": {
+    "ruta": "suenos.md",
+    "marca": ".ultimo_sueno",
+    "inactividad_minutos": 30,
+    "max_tokens": 8000,
+    "temperatura": 1.0
+  },
+  "hilos": {
+    "ruta": "hilos.json"
+  },
+  "memoria": {
+    "ruta": "memoria.jsonl",
+    "modelo_embedding": "VENDOR/MODELO-DE-EMBEDDING",
+    "umbral": 0.35,
+    "max_recuerdos": 3,
+    "modelo_frio": "VENDOR/MODELO-FRIO-SIN-PERSONA",
+    "peso_emocion": 1.0,
+    "peso_conectividad": 1.0,
+    "corte": 6.0
+  },
+  "sistema_ficheros": [
+    "IDENTITY.md",
+    "USER.md",
+    "SOUL.md"
+  ],
+  "escriba": {
+    "max_tokens": 6000
+  }
+}

@@ -1,0 +1,48 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  sanidad:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Dependencias
+        run: pip install -r requirements.txt
+
+      - name: Todo compila
+        run: python -m compileall -q nucleo herramientas pruebas main.py
+
+      - name: Modulos clave importan
+        run: >
+          python -c "import nucleo.persona, nucleo.hilos, nucleo.reloj,
+          nucleo.modelo, nucleo.telegram, nucleo.diario, nucleo.jurado,
+          nucleo.apuntes, nucleo.insistir, nucleo.escriba"
+
+      - name: Persona por config
+        run: >
+          python -c "from nucleo.persona import aplicar;
+          cfg={'persona':{'nombre':'Test','vocativo':'Jefe'}};
+          s=aplicar('hola __NOMBRE__, saluda a __VOCATIVO__', cfg);
+          assert s=='hola Test, saluda a Jefe', s"
+
+      - name: Sin secretos ni datos personales
+        shell: bash
+        run: |
+          ! grep -RnE "sk-[A-Za-z0-9_-]{16}|[0-9]{8,}:[A-Za-z0-9_-]{30,}" \
+              --include='*.py' --include='*.json' --include='*.vbs' \
+              --include='*.cmd' --include='*.sh' .
+
+      - name: Config de ejemplo valida
+        run: python -c "import json; json.load(open('config.ejemplo.json', encoding='utf-8'))"
