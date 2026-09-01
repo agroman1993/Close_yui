@@ -141,7 +141,13 @@ def cargar_config():
         ("sondeo", "pre_memoria", "pre-memoria.jsonl"),
         ("sondeo", "marca", ".ultimo_sondeo"),
     ):
-        bloque = cfg.setdefault(seccion, {})
+        # setdefault NO: crear la seccion aqui la enciende. El sueño y el
+        # diario se apagan quitando su bloque del config, y anclar rutas los
+        # resucitaba — `if cfg.get("sueno")` veia un dict con la ruta dentro
+        # y lo tomaba por verdadero. Se ancla solo lo que ya existe.
+        bloque = cfg.get(seccion)
+        if not isinstance(bloque, dict):
+            continue
         p = Path(bloque.get(clave) or defecto)
         if not p.is_absolute():
             bloque[clave] = str(RAIZ / p)
